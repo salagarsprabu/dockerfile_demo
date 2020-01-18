@@ -1,0 +1,35 @@
+FROM jenkins/jenkins:lts
+MAINTAINER salagars
+USER root
+RUN mkdir /opt/maven
+RUN wget https://www-eu.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz
+RUN tar -xvzf apache-maven-3.6.3-bin.tar.gz
+RUN mv apache-maven-3.6.3/* maven/. && rm -rf apache-maven-3.6.3
+RUN touch /etc/profile.d/variable && echo "export PATH=/opt/maven/bin:${PATH}" >> /etc/profile.d/variable
+RUN apt-get update && apt-get install curl wget -y
+RUN curl -sL https://deb.nodesource.com/setup_12.x | bash -
+RUN apt-get install nodejs -y
+RUN curl -sL https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+RUN apt-get update && apt-get install yarn
+RUN node --version && npm --version && npm install -g @angular/cli
+RUN ng --version
+RUN apt-get update && \
+apt-get -y install apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg2 \
+    software-properties-common && \
+    curl -fsSL https://download.docker.com/linux/$(. /etc/os-release;
+    echo "$ID")/gpg > /tmp/dkey; apt-key add /tmp/dkey && \
+    add-apt-repository \
+    "deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") \
+    $(lsb_release -cs) \
+    stable" && \
+    apt-get update && \
+    apt-get -y install docker-ce
+RUN apt-get install -y docker-ce
+RUN apt-get -y install sudo
+RUN useradd -m -d /home/jenkins jenkins && echo "jenkins:jenkins" | chpasswd
+RUN echo 'jenkins ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+RUN usermod -a -G docker jenkins
+USER jenkins
